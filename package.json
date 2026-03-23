@@ -9,11 +9,11 @@
     "start": "node backend/dist/server.js",
     "preview": "npm run preview --workspace=frontend"
   },
-  "dependencies": {
-    "concurrently": "^8.2.2"
-  },
   "workspaces": [
     "backend",
     "frontend"
-  ]
+  ],
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
 }
