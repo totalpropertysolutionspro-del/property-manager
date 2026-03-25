@@ -4,10 +4,16 @@ import * as schema from "./schema.js";
 import { writeFileSync } from "fs";
 import { mkdir } from "fs/promises";
 
-const dbPath = "file:./data/tps.db";
+// Use DATABASE_URL env var in production (e.g. Railway volume at /data/tps.db)
+// Fall back to local file in development
+const dbPath = process.env.DATABASE_URL || "file:./data/tps.db";
+const isLocalFile = dbPath.startsWith("file:");
 
-// Ensure data directory exists
-await mkdir("./data", { recursive: true });
+// Ensure data directory exists for local SQLite files
+if (isLocalFile) {
+  const localPath = dbPath.replace("file:", "").replace(/\/[^/]+$/, "");
+  await mkdir(localPath || "./data", { recursive: true });
+}
 
 const sqlite = createClient({ url: dbPath });
 
