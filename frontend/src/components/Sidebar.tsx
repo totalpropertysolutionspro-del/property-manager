@@ -2,9 +2,10 @@ import {
   LayoutDashboard,
   Building2,
   Users,
-  FileText,
   DollarSign,
   Hammer,
+  BookUser,
+  Truck,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -40,9 +41,14 @@ export default function Sidebar({ currentPage, setCurrentPage }: SidebarProps) {
       icon: DollarSign,
     },
     {
-      id: "staff",
-      label: "Staff",
-      icon: FileText,
+      id: "contacts",
+      label: "Contacts",
+      icon: BookUser,
+    },
+    {
+      id: "vendors",
+      label: "Vendors",
+      icon: Truck,
     },
   ];
 

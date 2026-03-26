@@ -81,5 +81,37 @@ export type NewInvoice = typeof invoices.$inferInsert;
 export type Staff = typeof staff.$inferSelect;
 export type NewStaff = typeof staff.$inferInsert;
 
+export const contacts = sqliteTable("contacts", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  email: text("email").notNull(),
+  phone: text("phone").notNull(),
+  company: text("company"),
+  type: text("type").notNull(), // "client", "vendor", "pm", "subcontractor", "lead"
+  notes: text("notes"),
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+});
+
+export const vendors = sqliteTable("vendors", {
+  id: text("id").primaryKey(),
+  companyName: text("company_name").notNull(),
+  contactPerson: text("contact_person").notNull(),
+  email: text("email").notNull(),
+  phone: text("phone").notNull(),
+  serviceType: text("service_type").notNull(), // "plumber", "electrician", "hvac", "landscaping", etc.
+  insuranceOnFile: integer("insurance_on_file", { mode: "boolean" }).notNull().default(false),
+  notes: text("notes"),
+  rating: integer("rating"), // 1-5
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+});
+
 export type Notification = typeof notifications.$inferSelect;
 export type NewNotification = typeof notifications.$inferInsert;
+
+export type Contact = typeof contacts.$inferSelect;
+export type NewContact = typeof contacts.$inferInsert;
+
+export type Vendor = typeof vendors.$inferSelect;
+export type NewVendor = typeof vendors.$inferInsert;

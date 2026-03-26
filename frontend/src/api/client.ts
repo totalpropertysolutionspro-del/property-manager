@@ -117,6 +117,50 @@ export const updateStaffMember = (id: string, data: Partial<Staff>) =>
   client.put<Staff>(`/staff/${id}`, data);
 export const deleteStaffMember = (id: string) => client.delete(`/staff/${id}`);
 
+export interface Contact {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  company?: string;
+  type: string;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Vendor {
+  id: string;
+  companyName: string;
+  contactPerson: string;
+  email: string;
+  phone: string;
+  serviceType: string;
+  insuranceOnFile: boolean;
+  notes?: string;
+  rating?: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Contacts
+export const getContacts = () => client.get<Contact[]>("/contacts");
+export const getContact = (id: string) => client.get<Contact>(`/contacts/${id}`);
+export const createContact = (data: Omit<Contact, "id" | "createdAt" | "updatedAt">) =>
+  client.post<Contact>("/contacts", data);
+export const updateContact = (id: string, data: Partial<Contact>) =>
+  client.put<Contact>(`/contacts/${id}`, data);
+export const deleteContact = (id: string) => client.delete(`/contacts/${id}`);
+
+// Vendors
+export const getVendors = () => client.get<Vendor[]>("/vendors");
+export const getVendor = (id: string) => client.get<Vendor>(`/vendors/${id}`);
+export const createVendor = (data: Omit<Vendor, "id" | "createdAt" | "updatedAt">) =>
+  client.post<Vendor>("/vendors", data);
+export const updateVendor = (id: string, data: Partial<Vendor>) =>
+  client.put<Vendor>(`/vendors/${id}`, data);
+export const deleteVendor = (id: string) => client.delete(`/vendors/${id}`);
+
 // Notifications
 export const getNotifications = () => client.get<Notification[]>("/notifications");
 export const getUnreadCount = () => client.get<{ count: number }>("/notifications/unread/count");

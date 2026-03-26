@@ -8,6 +8,8 @@ import workOrdersRouter from "./routes/workorders.js";
 import invoicesRouter from "./routes/invoices.js";
 import staffRouter from "./routes/staff.js";
 import notificationsRouter from "./routes/notifications.js";
+import contactsRouter from "./routes/contacts.js";
+import vendorsRouter from "./routes/vendors.js";
 
 dotenv.config();
 
@@ -39,6 +41,8 @@ app.use("/api/work-orders", workOrdersRouter);
 app.use("/api/invoices", invoicesRouter);
 app.use("/api/staff", staffRouter);
 app.use("/api/notifications", notificationsRouter);
+app.use("/api/contacts", contactsRouter);
+app.use("/api/vendors", vendorsRouter);
 
 // Health check
 app.get("/health", (req, res) => {

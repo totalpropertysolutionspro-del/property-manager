@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Navbar from "./components/Navbar";
 import Sidebar from "./components/Sidebar";
 import Dashboard from "./components/Dashboard";
@@ -6,9 +6,10 @@ import Properties from "./components/Properties";
 import Tenants from "./components/Tenants";
 import WorkOrders from "./components/WorkOrders";
 import Invoices from "./components/Invoices";
-import Staff from "./components/Staff";
+import Contacts from "./components/Contacts";
+import Vendors from "./components/Vendors";
 
-type Page = "dashboard" | "properties" | "tenants" | "workorders" | "invoices" | "staff";
+type Page = "dashboard" | "properties" | "tenants" | "workorders" | "invoices" | "contacts" | "vendors";
 
 function App() {
   const [currentPage, setCurrentPage] = useState<Page>("dashboard");
@@ -25,8 +26,10 @@ function App() {
         return <WorkOrders />;
       case "invoices":
         return <Invoices />;
-      case "staff":
-        return <Staff />;
+      case "contacts":
+        return <Contacts />;
+      case "vendors":
+        return <Vendors />;
       default:
         return <Dashboard />;
     }

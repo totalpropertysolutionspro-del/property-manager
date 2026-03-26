@@ -24,13 +24,15 @@ export async function backupDatabase() {
   const backupPath = "backup.json";
 
   try {
-    const [properties, tenants, workOrders, invoices, staff, notifications] = await Promise.all([
+    const [properties, tenants, workOrders, invoices, staff, notifications, contacts, vendors] = await Promise.all([
       db.select().from(schema.properties),
       db.select().from(schema.tenants),
       db.select().from(schema.workOrders),
       db.select().from(schema.invoices),
       db.select().from(schema.staff),
       db.select().from(schema.notifications),
+      db.select().from(schema.contacts),
+      db.select().from(schema.vendors),
     ]);
 
     const backup = {
@@ -41,6 +43,8 @@ export async function backupDatabase() {
       invoices,
       staff,
       notifications,
+      contacts,
+      vendors,
     };
 
     writeFileSync(backupPath, JSON.stringify(backup, null, 2));
@@ -120,6 +124,30 @@ export async function initializeDatabase() {
         message TEXT NOT NULL,
         is_read INTEGER NOT NULL DEFAULT 0,
         created_at TEXT NOT NULL
+      )`,
+      `CREATE TABLE IF NOT EXISTS contacts (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        email TEXT NOT NULL,
+        phone TEXT NOT NULL,
+        company TEXT,
+        type TEXT NOT NULL,
+        notes TEXT,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      )`,
+      `CREATE TABLE IF NOT EXISTS vendors (
+        id TEXT PRIMARY KEY,
+        company_name TEXT NOT NULL,
+        contact_person TEXT NOT NULL,
+        email TEXT NOT NULL,
+        phone TEXT NOT NULL,
+        service_type TEXT NOT NULL,
+        insurance_on_file INTEGER NOT NULL DEFAULT 0,
+        notes TEXT,
+        rating INTEGER,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
       )`
     ];
 
