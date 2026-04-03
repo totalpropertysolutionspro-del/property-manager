@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "concurrently \"npm run dev --workspace=backend\" \"npm run dev --workspace=frontend\"",
     "build": "npm run build --workspace=backend && npm run build --workspace=frontend",
+    "build:netlify": "cd frontend && npm install && npm run build",
     "start": "node backend/dist/server.js",
     "preview": "npm run preview --workspace=frontend"
   },
@@ -13,6 +14,9 @@
     "backend",
     "frontend"
   ],
+  "dependencies": {
+    "serverless-http": "^3.2.0"
+  },
   "devDependencies": {
     "concurrently": "^9.2.1",
     "vite": "^5.4.21"

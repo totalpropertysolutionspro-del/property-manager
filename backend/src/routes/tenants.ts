@@ -1,6 +1,7 @@
 import { Router, Request, Response } from "express";
 import { db } from "../db/index.js";
 import { tenants } from "../db/schema.js";
+import { eq } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
 import { createNotification } from "../services/notification.js";
 
@@ -20,12 +21,13 @@ router.get("/", async (req: Request, res: Response) => {
 // Get single tenant
 router.get("/:id", async (req: Request, res: Response) => {
   try {
-    const tenant = await db
+    const result = await db
       .select()
       .from(tenants)
-      .where((t) => t.id === req.params.id)
-      .get();
+      .where(eq(tenants.id, req.params.id))
+      .all();
 
+    const tenant = result[0];
     if (!tenant) {
       return res.status(404).json({ error: "Tenant not found" });
     }
@@ -113,12 +115,13 @@ router.put("/:id", async (req: Request, res: Response) => {
       rentAmount,
     } = req.body;
 
-    const existingTenant = await db
+    const existing = await db
       .select()
       .from(tenants)
-      .where((t) => t.id === req.params.id)
-      .get();
+      .where(eq(tenants.id, req.params.id))
+      .all();
 
+    const existingTenant = existing[0];
     if (!existingTenant) {
       return res.status(404).json({ error: "Tenant not found" });
     }
@@ -139,7 +142,7 @@ router.put("/:id", async (req: Request, res: Response) => {
     await db
       .update(tenants)
       .set(updatedTenant)
-      .where((t) => t.id === req.params.id)
+      .where(eq(tenants.id, req.params.id))
       .run();
 
     res.json(updatedTenant);
@@ -152,19 +155,19 @@ router.put("/:id", async (req: Request, res: Response) => {
 // Delete tenant
 router.delete("/:id", async (req: Request, res: Response) => {
   try {
-    const existingTenant = await db
+    const existing = await db
       .select()
       .from(tenants)
-      .where((t) => t.id === req.params.id)
-      .get();
+      .where(eq(tenants.id, req.params.id))
+      .all();
 
-    if (!existingTenant) {
+    if (!existing[0]) {
       return res.status(404).json({ error: "Tenant not found" });
     }
 
     await db
       .delete(tenants)
-      .where((t) => t.id === req.params.id)
+      .where(eq(tenants.id, req.params.id))
       .run();
 
     res.json({ message: "Tenant deleted successfully" });

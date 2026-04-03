@@ -1,6 +1,7 @@
 import { Router, Request, Response } from "express";
 import { db } from "../db/index.js";
 import { staff } from "../db/schema.js";
+import { eq } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
 
 const router = Router();
@@ -19,12 +20,13 @@ router.get("/", async (req: Request, res: Response) => {
 // Get single staff member
 router.get("/:id", async (req: Request, res: Response) => {
   try {
-    const member = await db
+    const result = await db
       .select()
       .from(staff)
-      .where((s) => s.id === req.params.id)
-      .get();
+      .where(eq(staff.id, req.params.id))
+      .all();
 
+    const member = result[0];
     if (!member) {
       return res.status(404).json({ error: "Staff member not found" });
     }
@@ -71,12 +73,13 @@ router.put("/:id", async (req: Request, res: Response) => {
   try {
     const { name, role, phone, email } = req.body;
 
-    const existingMember = await db
+    const existing = await db
       .select()
       .from(staff)
-      .where((s) => s.id === req.params.id)
-      .get();
+      .where(eq(staff.id, req.params.id))
+      .all();
 
+    const existingMember = existing[0];
     if (!existingMember) {
       return res.status(404).json({ error: "Staff member not found" });
     }
@@ -93,7 +96,7 @@ router.put("/:id", async (req: Request, res: Response) => {
     await db
       .update(staff)
       .set(updatedMember)
-      .where((s) => s.id === req.params.id)
+      .where(eq(staff.id, req.params.id))
       .run();
 
     res.json(updatedMember);
@@ -106,19 +109,19 @@ router.put("/:id", async (req: Request, res: Response) => {
 // Delete staff member
 router.delete("/:id", async (req: Request, res: Response) => {
   try {
-    const existingMember = await db
+    const existing = await db
       .select()
       .from(staff)
-      .where((s) => s.id === req.params.id)
-      .get();
+      .where(eq(staff.id, req.params.id))
+      .all();
 
-    if (!existingMember) {
+    if (!existing[0]) {
       return res.status(404).json({ error: "Staff member not found" });
     }
 
     await db
       .delete(staff)
-      .where((s) => s.id === req.params.id)
+      .where(eq(staff.id, req.params.id))
       .run();
 
     res.json({ message: "Staff member deleted successfully" });

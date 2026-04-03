@@ -1,6 +1,7 @@
 import { Router, Request, Response } from "express";
 import { db } from "../db/index.js";
 import { properties } from "../db/schema.js";
+import { eq } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
 
 const router = Router();
@@ -19,12 +20,13 @@ router.get("/", async (req: Request, res: Response) => {
 // Get single property
 router.get("/:id", async (req: Request, res: Response) => {
   try {
-    const property = await db
+    const result = await db
       .select()
       .from(properties)
-      .where((p) => p.id === req.params.id)
-      .get();
+      .where(eq(properties.id, req.params.id))
+      .all();
 
+    const property = result[0];
     if (!property) {
       return res.status(404).json({ error: "Property not found" });
     }
@@ -72,12 +74,13 @@ router.put("/:id", async (req: Request, res: Response) => {
   try {
     const { name, address, type, units, status } = req.body;
 
-    const existingProperty = await db
+    const existing = await db
       .select()
       .from(properties)
-      .where((p) => p.id === req.params.id)
-      .get();
+      .where(eq(properties.id, req.params.id))
+      .all();
 
+    const existingProperty = existing[0];
     if (!existingProperty) {
       return res.status(404).json({ error: "Property not found" });
     }
@@ -95,7 +98,7 @@ router.put("/:id", async (req: Request, res: Response) => {
     await db
       .update(properties)
       .set(updatedProperty)
-      .where((p) => p.id === req.params.id)
+      .where(eq(properties.id, req.params.id))
       .run();
 
     res.json(updatedProperty);
@@ -108,19 +111,19 @@ router.put("/:id", async (req: Request, res: Response) => {
 // Delete property
 router.delete("/:id", async (req: Request, res: Response) => {
   try {
-    const existingProperty = await db
+    const existing = await db
       .select()
       .from(properties)
-      .where((p) => p.id === req.params.id)
-      .get();
+      .where(eq(properties.id, req.params.id))
+      .all();
 
-    if (!existingProperty) {
+    if (!existing[0]) {
       return res.status(404).json({ error: "Property not found" });
     }
 
     await db
       .delete(properties)
-      .where((p) => p.id === req.params.id)
+      .where(eq(properties.id, req.params.id))
       .run();
 
     res.json({ message: "Property deleted successfully" });

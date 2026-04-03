@@ -1,6 +1,7 @@
 import { Router, Request, Response } from "express";
 import { db } from "../db/index.js";
 import { workOrders } from "../db/schema.js";
+import { eq } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
 import { createNotification } from "../services/notification.js";
 
@@ -20,12 +21,13 @@ router.get("/", async (req: Request, res: Response) => {
 // Get single work order
 router.get("/:id", async (req: Request, res: Response) => {
   try {
-    const workOrder = await db
+    const result = await db
       .select()
       .from(workOrders)
-      .where((w) => w.id === req.params.id)
-      .get();
+      .where(eq(workOrders.id, req.params.id))
+      .all();
 
+    const workOrder = result[0];
     if (!workOrder) {
       return res.status(404).json({ error: "Work order not found" });
     }
@@ -86,12 +88,13 @@ router.put("/:id", async (req: Request, res: Response) => {
     const { title, propertyId, priority, status, assignedStaffId, notes } =
       req.body;
 
-    const existingWorkOrder = await db
+    const existing = await db
       .select()
       .from(workOrders)
-      .where((w) => w.id === req.params.id)
-      .get();
+      .where(eq(workOrders.id, req.params.id))
+      .all();
 
+    const existingWorkOrder = existing[0];
     if (!existingWorkOrder) {
       return res.status(404).json({ error: "Work order not found" });
     }
@@ -109,19 +112,19 @@ router.put("/:id", async (req: Request, res: Response) => {
 
     // Create notification if status changed
     if (status && status !== existingWorkOrder.status) {
-      let notificationType = "work_order_updated" as const;
+      let notificationType = "work_order_updated" as string;
       let notificationMessage = `Work order status changed to ${status}`;
 
       if (status === "in_progress") {
         notificationType = "work_order_in_progress";
-        notificationMessage = `Work order "${title}" is now in progress`;
+        notificationMessage = `Work order "${existingWorkOrder.title}" is now in progress`;
       } else if (status === "completed") {
         notificationType = "work_order_completed";
-        notificationMessage = `Work order "${title}" has been completed`;
+        notificationMessage = `Work order "${existingWorkOrder.title}" has been completed`;
       }
 
       await createNotification({
-        type: notificationType,
+        type: notificationType as any,
         title: "Work Order Status Updated",
         message: notificationMessage,
         shouldSendEmail: true,
@@ -134,7 +137,7 @@ router.put("/:id", async (req: Request, res: Response) => {
     await db
       .update(workOrders)
       .set(updatedWorkOrder)
-      .where((w) => w.id === req.params.id)
+      .where(eq(workOrders.id, req.params.id))
       .run();
 
     res.json(updatedWorkOrder);
@@ -147,19 +150,19 @@ router.put("/:id", async (req: Request, res: Response) => {
 // Delete work order
 router.delete("/:id", async (req: Request, res: Response) => {
   try {
-    const existingWorkOrder = await db
+    const existing = await db
       .select()
       .from(workOrders)
-      .where((w) => w.id === req.params.id)
-      .get();
+      .where(eq(workOrders.id, req.params.id))
+      .all();
 
-    if (!existingWorkOrder) {
+    if (!existing[0]) {
       return res.status(404).json({ error: "Work order not found" });
     }
 
     await db
       .delete(workOrders)
-      .where((w) => w.id === req.params.id)
+      .where(eq(workOrders.id, req.params.id))
       .run();
 
     res.json({ message: "Work order deleted successfully" });

@@ -1,23 +1,43 @@
 import { useEffect, useState } from "react";
 import {
   Building2,
-  Hammer,
-  DollarSign,
   Users,
+  ClipboardList,
+  AlertTriangle,
+  DollarSign,
+  Bell,
   TrendingUp,
+  Plus,
+  FileText,
 } from "lucide-react";
 import * as api from "../api/client";
 
-export default function Dashboard() {
-  const [stats, setStats] = useState({
+interface DashboardProps {
+  setCurrentPage: (page: string) => void;
+}
+
+interface Stats {
+  properties: number;
+  tenants: number;
+  openTickets: number;
+  activeIncidents: number;
+  monthlyRevenue: number;
+  overdueInvoices: number;
+  pendingReminders: number;
+}
+
+export default function Dashboard({ setCurrentPage }: DashboardProps) {
+  const [stats, setStats] = useState<Stats>({
     properties: 0,
-    openWorkOrders: 0,
-    revenue: 0,
-    occupancy: 0,
     tenants: 0,
-    invoicesOverdue: 0,
+    openTickets: 0,
+    activeIncidents: 0,
+    monthlyRevenue: 0,
+    overdueInvoices: 0,
+    pendingReminders: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchStats();
@@ -26,164 +46,198 @@ export default function Dashboard() {
   const fetchStats = async () => {
     try {
       setLoading(true);
-      const [propertiesRes, tenantsRes, workOrdersRes, invoicesRes] =
+      setError(null);
+      const [propertiesRes, tenantsRes, workOrdersRes, invoicesRes, incidentsRes, remindersRes] =
         await Promise.all([
           api.getProperties(),
           api.getTenants(),
           api.getWorkOrders(),
           api.getInvoices(),
+          api.getIncidents(),
+          api.getReminders(),
         ]);
 
-      const totalUnits = propertiesRes.data.reduce(
-        (sum, p) => sum + p.units,
-        0
-      );
-      const occupiedUnits = tenantsRes.data.length;
-      const occupancy =
-        totalUnits > 0 ? Math.round((occupiedUnits / totalUnits) * 100) : 0;
-
-      const totalRent = tenantsRes.data.reduce((sum, t) => sum + t.rentAmount, 0);
-
-      const openWO = workOrdersRes.data.filter(
+      const monthlyRevenue = tenantsRes.data.reduce((sum, t) => sum + t.rentAmount, 0);
+      const openTickets = workOrdersRes.data.filter(
         (w) => w.status === "open" || w.status === "in_progress"
       ).length;
-
-      const overdueInvoices = invoicesRes.data.filter(
-        (i) => i.status === "overdue"
+      const activeIncidents = incidentsRes.data.filter(
+        (i) => i.status === "open" || i.status === "investigating"
       ).length;
+      const overdueInvoices = invoicesRes.data.filter((i) => i.status === "overdue").length;
+      const pendingReminders = remindersRes.data.filter((r) => r.status === "pending").length;
 
       setStats({
         properties: propertiesRes.data.length,
-        openWorkOrders: openWO,
-        revenue: totalRent,
-        occupancy,
         tenants: tenantsRes.data.length,
-        invoicesOverdue: overdueInvoices,
+        openTickets,
+        activeIncidents,
+        monthlyRevenue,
+        overdueInvoices,
+        pendingReminders,
       });
-    } catch (error) {
-      console.error("Failed to fetch stats:", error);
+    } catch (err) {
+      console.error("Failed to fetch stats:", err);
+      setError("Failed to load dashboard data. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
-  const StatCard = ({
-    icon: Icon,
-    label,
-    value,
-    trend,
-  }: {
-    icon: any;
-    label: string;
-    value: string | number;
-    trend?: string;
-  }) => (
-    <div className="card">
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-gray-500 text-sm font-medium">{label}</p>
-          <p className="text-3xl font-bold text-gray-900 mt-2">{value}</p>
-          {trend && (
-            <p className="text-green-600 text-sm mt-2 flex items-center gap-1">
-              <TrendingUp className="w-4 h-4" />
-              {trend}
-            </p>
-          )}
-        </div>
-        <Icon className="w-8 h-8 text-blue-600" />
-      </div>
-    </div>
-  );
-
   if (loading) {
-    return <div className="text-center py-12">Loading dashboard...</div>;
+    return (
+      <div className="flex items-center justify-center py-24">
+        <div className="text-center">
+          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+          <p className="text-gray-500">Loading dashboard...</p>
+        </div>
+      </div>
+    );
   }
+
+  if (error) {
+    return (
+      <div className="card text-center py-12">
+        <p className="text-red-600 mb-4">{error}</p>
+        <button onClick={fetchStats} className="btn btn-primary">
+          Retry
+        </button>
+      </div>
+    );
+  }
+
+  const statCards = [
+    {
+      label: "Total Properties",
+      value: stats.properties,
+      icon: Building2,
+      color: "text-blue-600",
+      bg: "bg-blue-50",
+    },
+    {
+      label: "Active Tenants",
+      value: stats.tenants,
+      icon: Users,
+      color: "text-green-600",
+      bg: "bg-green-50",
+    },
+    {
+      label: "Open Tickets",
+      value: stats.openTickets,
+      icon: ClipboardList,
+      color: "text-yellow-600",
+      bg: "bg-yellow-50",
+    },
+    {
+      label: "Active Incidents",
+      value: stats.activeIncidents,
+      icon: AlertTriangle,
+      color: "text-red-600",
+      bg: "bg-red-50",
+    },
+    {
+      label: "Monthly Revenue",
+      value: `$${stats.monthlyRevenue.toLocaleString()}`,
+      icon: DollarSign,
+      color: "text-emerald-600",
+      bg: "bg-emerald-50",
+    },
+    {
+      label: "Overdue Invoices",
+      value: stats.overdueInvoices,
+      icon: TrendingUp,
+      color: stats.overdueInvoices > 0 ? "text-red-600" : "text-gray-600",
+      bg: stats.overdueInvoices > 0 ? "bg-red-50" : "bg-gray-50",
+    },
+    {
+      label: "Pending Reminders",
+      value: stats.pendingReminders,
+      icon: Bell,
+      color: "text-purple-600",
+      bg: "bg-purple-50",
+    },
+  ];
 
   return (
     <div className="space-y-6">
       <div>
         <h2 className="text-3xl font-bold text-gray-900">Dashboard</h2>
-        <p className="text-gray-600 mt-2">
-          Welcome to Total Property Solutions Pro
-        </p>
+        <p className="text-gray-500 mt-1">Welcome back to Total Property Solutions Pro</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <StatCard
-          icon={Building2}
-          label="Total Properties"
-          value={stats.properties}
-          trend="+2 this month"
-        />
-        <StatCard
-          icon={Users}
-          label="Active Tenants"
-          value={stats.tenants}
-          trend="+1 this month"
-        />
-        <StatCard
-          icon={DollarSign}
-          label="Monthly Revenue"
-          value={`$${stats.revenue.toLocaleString()}`}
-          trend="+5% from last month"
-        />
-        <StatCard
-          icon={Hammer}
-          label="Open Work Orders"
-          value={stats.openWorkOrders}
-          trend="1 in progress"
-        />
-        <StatCard
-          icon={TrendingUp}
-          label="Occupancy Rate"
-          value={`${stats.occupancy}%`}
-          trend="All good"
-        />
-        <StatCard
-          icon={DollarSign}
-          label="Overdue Invoices"
-          value={stats.invoicesOverdue}
-          trend={stats.invoicesOverdue > 0 ? "Action needed" : "All paid"}
-        />
+      {/* Stat Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        {statCards.map((card) => {
+          const Icon = card.icon;
+          return (
+            <div key={card.label} className="card">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-gray-500 text-sm font-medium">{card.label}</p>
+                  <p className="text-3xl font-bold text-gray-900 mt-2">{card.value}</p>
+                </div>
+                <div className={`${card.bg} p-2 rounded-lg`}>
+                  <Icon className={`w-6 h-6 ${card.color}`} />
+                </div>
+              </div>
+            </div>
+          );
+        })}
       </div>
 
+      {/* Quick Actions */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="card">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            Quick Actions
-          </h3>
-          <div className="space-y-2">
-            <button className="w-full btn btn-primary text-left">
-              Create New Work Order
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              onClick={() => setCurrentPage("tickets")}
+              className="btn btn-primary flex items-center gap-2 justify-center"
+            >
+              <Plus className="w-4 h-4" />
+              Create Ticket
             </button>
-            <button className="w-full btn btn-secondary text-left">
-              Add New Tenant
+            <button
+              onClick={() => setCurrentPage("tenants")}
+              className="btn btn-secondary flex items-center gap-2 justify-center"
+            >
+              <Users className="w-4 h-4" />
+              Add Tenant
             </button>
-            <button className="w-full btn btn-secondary text-left">
-              Create Invoice
+            <button
+              onClick={() => setCurrentPage("invoices")}
+              className="btn btn-secondary flex items-center gap-2 justify-center"
+            >
+              <FileText className="w-4 h-4" />
+              New Invoice
+            </button>
+            <button
+              onClick={() => setCurrentPage("incidents")}
+              className="btn btn-secondary flex items-center gap-2 justify-center"
+            >
+              <AlertTriangle className="w-4 h-4" />
+              Report Incident
             </button>
           </div>
         </div>
 
         <div className="card">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            System Status
-          </h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">System Status</h3>
           <div className="space-y-3">
             <div className="flex justify-between items-center">
-              <span className="text-gray-600">Database</span>
+              <span className="text-gray-600 text-sm">Database</span>
               <span className="badge badge-success">Connected</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-gray-600">API Server</span>
+              <span className="text-gray-600 text-sm">API Server</span>
               <span className="badge badge-success">Running</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-gray-600">Email Service</span>
+              <span className="text-gray-600 text-sm">Email Service</span>
               <span className="badge badge-info">Configured</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-gray-600">SMS Service</span>
+              <span className="text-gray-600 text-sm">Square Integration</span>
               <span className="badge badge-info">Configured</span>
             </div>
           </div>
