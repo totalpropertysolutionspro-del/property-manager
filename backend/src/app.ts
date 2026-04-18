@@ -1,6 +1,8 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+import path from "path";
+import { fileURLToPath } from "url";
 import authRouter from "./routes/auth.js";
 import propertiesRouter from "./routes/properties.js";
 import tenantsRouter from "./routes/tenants.js";
@@ -57,6 +59,16 @@ app.use("/api/messages", messagesRouter);
 app.get("/health", (req, res) => {
   res.json({ status: "ok" });
 });
+
+// Serve React frontend in production
+if (process.env.NODE_ENV === "production") {
+  const __dirname = path.dirname(fileURLToPath(import.meta.url));
+  const frontendDist = path.join(__dirname, "../../frontend/dist");
+  app.use(express.static(frontendDist));
+  app.get("*", (_req, res) => {
+    res.sendFile(path.join(frontendDist, "index.html"));
+  });
+}
 
 // Error handler
 app.use(
