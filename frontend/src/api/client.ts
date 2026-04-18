@@ -121,8 +121,11 @@ export const createFile = (d: any) => client.post<FileRecord>("/files", d);
 export const updateFile = (id: string, d: any) => client.put<FileRecord>(`/files/${id}`, d);
 export const deleteFile = (id: string) => client.delete(`/files/${id}`);
 
+export const sendEmailMessage = (d: { to: string; subject: string; body: string }) => client.post("/messages/email", d);
+export const sendSMSMessage = (d: { to: string; body: string }) => client.post("/messages/sms", d);
+
 export const getNotifications = () => client.get<Notification[]>("/notifications");
-export const getUnreadNotifications = () => client.get<Notification[]>("/notifications?unread=true");
+export const getUnreadNotifications = () => client.get<Notification[]>("/notifications/unread");
 export const getUnreadCount = () => client.get<{ count: number }>("/notifications/unread/count");
 export const markAsRead = (id: string) => client.put(`/notifications/${id}/read`);
 export const markAllAsRead = () => client.put("/notifications/all/read");

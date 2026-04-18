@@ -14,6 +14,7 @@ import incidentsRouter from "./routes/incidents.js";
 import squareRouter from "./routes/square.js";
 import remindersRouter from "./routes/reminders.js";
 import filesRouter from "./routes/files.js";
+import messagesRouter from "./routes/messages.js";
 import { requireAuth } from "./middleware/auth.js";
 
 dotenv.config();
@@ -50,6 +51,7 @@ app.use("/api/square", squareRouter);
 app.use("/api/reminders", remindersRouter);
 app.use("/api/files", filesRouter);
 app.use("/api/tickets", workOrdersRouter);
+app.use("/api/messages", messagesRouter);
 
 // Health check
 app.get("/health", (req, res) => {
